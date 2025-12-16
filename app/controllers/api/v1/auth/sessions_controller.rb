@@ -2,14 +2,13 @@ module Api
   module V1
     module Auth
       class SessionsController < Devise::SessionsController
-        skip_before_action :verify_authenticity_token
         before_action :authenticate_user!, only: :destroy
 
         def create
           user = User.find_for_database_authentication(email: sign_in_params[:email])
 
           if user&.valid_password?(sign_in_params[:password])
-            sign_in(user)
+            sign_in(user, store: false)
             render json: response_payload(user), status: :ok
           else
             render json: { errors: ['Geçersiz e-posta veya parola'] }, status: :unauthorized
