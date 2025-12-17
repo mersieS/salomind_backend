@@ -2,7 +2,6 @@ module Api
   module V1
     module Auth
       class RegistrationsController < Devise::RegistrationsController
-
         def create
           user = User.new(sign_up_params)
 
@@ -26,7 +25,7 @@ module Api
               id: user.id,
               email: user.email
             },
-            token: request.env['warden-jwt_auth.token']
+            token: request.env["warden-jwt_auth.token"]
           }
         end
       end

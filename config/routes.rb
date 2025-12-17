@@ -19,6 +19,9 @@ Rails.application.routes.draw do
           post :sign_up, to: "registrations#create"
           post :sign_in, to: "sessions#create"
           delete :sign_out, to: "sessions#destroy"
+          %i[sign_up sign_in sign_out].each do |path|
+            match path, to: proc { |_env| [204, {}, []] }, via: :options
+          end
         end
       end
     end
