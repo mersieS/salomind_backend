@@ -9,7 +9,10 @@ module Api
         end
 
         calculation = StressCalculatorService.new(stress_input_params).call
-        stress_record = user.stress_records.build(stress_input_params.merge(calculation))
+        stress_record = user.stress_records.build(stress_input_params.merge(
+          stress_score: calculation[:stress_score],
+          stress_level: calculation[:stress_level]
+        ))
 
         if stress_record.save
           render json: response_payload(calculation), status: :created
@@ -42,7 +45,8 @@ module Api
       private
 
       def find_user
-        User.find(params.require(:user_id))
+        user_id = params[:user_id] || params.dig(:stress_record, :user_id)
+        User.find(user_id)
       end
 
       def daily_entry_exists?(user)
@@ -50,7 +54,8 @@ module Api
       end
 
       def stress_input_params
-        params.permit(
+        payload = params[:stress_record] || params
+        payload.permit(
           :mood,
           :stress_feeling,
           :heart_rate,

@@ -4,13 +4,13 @@ class WeeklyStressReportService
   end
 
   def call
-    return [] if records.empty?
-
-    normalized = normalize_scores
-    records.each_with_index.map do |record, index|
+    records.map do |record|
+      normalized = StressCalculatorService.normalized_value(record.stress_score)
       {
         date: record.created_at.to_date.iso8601,
-        stress_score: normalized[index],
+        stress_score: normalized,
+        normalized_stress_score: normalized,
+        raw_stress_score: record.stress_score,
         stress_level: record.stress_level
       }
     end
@@ -19,21 +19,4 @@ class WeeklyStressReportService
   private
 
   attr_reader :records
-
-  def normalize_scores
-    scores = records.map(&:stress_score)
-    min_score = scores.min
-    max_score = scores.max
-
-    return Array.new(scores.size, default_normalized_value) if min_score == max_score
-
-    scores.map do |score|
-      normalized = 1 + ((score - min_score).to_f / (max_score - min_score) * 9)
-      [[normalized.round, 1].max, 10].min
-    end
-  end
-
-  def default_normalized_value
-    5
-  end
 end
