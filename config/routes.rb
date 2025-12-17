@@ -14,6 +14,13 @@ Rails.application.routes.draw do
 
   namespace :api do
     namespace :v1 do
+      resources :stress_records, only: [:create] do
+        collection do
+          get "weekly/:user_id", action: :weekly, as: :weekly
+          get "availability/:user_id", action: :availability, as: :availability
+        end
+      end
+
       namespace :auth do
         devise_scope :user do
           post :sign_up, to: "registrations#create"
