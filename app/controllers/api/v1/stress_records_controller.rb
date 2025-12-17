@@ -8,14 +8,16 @@ module Api
           return
         end
 
-        calculation = StressCalculatorService.new(stress_input_params).call
-        stress_record = user.stress_records.build(stress_input_params.merge(
+        inputs = stress_input_params
+        calculation = StressCalculatorService.new(inputs).call
+        stress_record = user.stress_records.build(inputs.merge(
           stress_score: calculation[:stress_score],
           stress_level: calculation[:stress_level]
         ))
 
         if stress_record.save
-          render json: response_payload(calculation), status: :created
+          webhook_message = StressRecordAlertNotifier.call(user: user, inputs: inputs, calculation: calculation)
+          render json: response_payload(calculation, webhook_message), status: :created
         else
           render json: { errors: stress_record.errors.full_messages }, status: :unprocessable_entity
         end
@@ -67,23 +69,12 @@ module Api
         ).to_h
       end
 
-      def response_payload(calculation)
+      def response_payload(calculation, webhook_message)
         {
           stress_score: calculation[:stress_score],
           stress_level: calculation[:stress_level],
-          recommendation: recommendation_for(calculation[:stress_level])
+          recommendation: webhook_message.presence || StressRecordAlertNotifier.delivery_message(calculation[:stress_level])
         }
-      end
-
-      def recommendation_for(level)
-        case level
-        when "High"
-          "Focus on breathing exercises and guided relaxation techniques."
-        when "Medium"
-          "Take a few short breaks and try light stretching."
-        else
-          "Great job—keep reinforcing the habits that keep you balanced."
-        end
       end
 
       def weekly_window
